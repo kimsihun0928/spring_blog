@@ -40,4 +40,55 @@ public class BoardNativeRepository {
         // while(rs.next()) {}
         return query.getResultList();
     }
+
+    // 게시글 상세보기 (특정ID로 조회)
+    public Board findById(Integer id) {
+
+        String strQuery = """
+                select * from board_tb where id = ?
+                """;
+        try {
+            Query query = em.createNativeQuery(strQuery, Board.class);
+            query.setParameter(1, id);
+            return (Board) query.getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // 특정 게시글 삭제 요청
+    @Transactional
+    public void deleteById(Integer id) {
+
+        String strQuery = """
+                delete from board_tb where id = ?
+                """;
+
+        Query query = em.createNativeQuery(strQuery, Board.class);
+        query.setParameter(1, id);
+        query.executeUpdate();
+    }
+
+    // 게시글 수정하기
+    @Transactional
+    public boolean updateById(String username, String title, String content, Integer id) {
+
+        String queryStr = """
+                update board_tb set username = ?, title = ?, content = ? where id = ?
+                """;
+
+        Query query = em.createNativeQuery(queryStr);
+        query.setParameter(1, username);
+        query.setParameter(2, title);
+        query.setParameter(3, content);
+        query.setParameter(4, id);
+
+        int rows = query.executeUpdate();
+        if (rows > 0) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
 }

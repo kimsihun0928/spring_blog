@@ -1,0 +1,23 @@
+{{> layout/header}}
+<div class="container p5 flex-grow-1">
+    <div class="card">
+        <div class="card-header"><b>글 수정 화면입니다</b></div>
+        <div class="card-body">
+            <!-- 익명 게시글 작성   -->
+            <form action="/board/{{id}}/update" method="post">
+                <div class="mb-3">
+                    <input type="text" name="username" placeholder="enter username" value="{{board.username}}">
+                </div>
+                <div class="mb-3">
+                    <input type="text" name="title" placeholder="enter title", value="{{board.title}}">
+                </div>
+                <div class="mb-3">
+                    <textarea type="text" rows="5" name="content" placeholder="enter content">{{board.content}}</textarea>
+                </div>
+                <button class="btn btn-primary">글 수정 완료</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{> layout/footer}}

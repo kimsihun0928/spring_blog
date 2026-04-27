@@ -89,7 +89,7 @@ public class BoardController {
         // 사용자 에게 해당 게시물 내용을 보여 줘야 한다.
 
         // 조회 기능 - 게시글 id로
-        Board board = boardNativeRepository.findById(id);
+        Board board = boardPersistRepository.findById(id);
         model.addAttribute("board", board);
 
         return "board/update-form";
@@ -97,17 +97,16 @@ public class BoardController {
 
     // /board/{id}/update
     @PostMapping("/board/{id}/update")
-    public String updateProc(@PathVariable(name = "id") Integer id,
-                             @RequestParam(name = "username") String username,
-                             @RequestParam(name = "title") String title,
-                             @RequestParam(name = "content") String content) {
+    // 메세지 컨버터란 객체가 동작해서 자동으로 객체를 생성하고 값을 매핑해준다.
+    public String updateProc(@PathVariable(name="id") Integer id,
+                             BoardRequest.UpdateDTO updateDTO) {
 
-        log.info("username : " + username);
-        log.info("title : " + title);
-        log.info("content : " + content);
-        log.info("id : " + id);
+        // 1. 유효성 검사
+        // username, title, content 유효성 검사
+        updateDTO.validate();
 
-        boardNativeRepository.updateById(username, title, content, id);
+        boardPersistRepository.updateById(id, updateDTO);
+
         // 게시글 수정 완료 ---> 게시글 목록, 게시글 상세보기 화면
         // 리다이렉트는 뷰 리졸브 동작이 아닌 (내부 파일 찾는 것이 아니고)
         // 그냥 새로은 HTTP Get 요청이다.

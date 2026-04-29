@@ -50,7 +50,6 @@ public class BoardController {
      */
     @GetMapping({"/", "index"})
     public String list(Model model) {
-        //List<Board> boardList = boardNativeRepository.findAll();
         List<Board> boardList = boardPersistRepository.findAll();
         model.addAttribute("boardList", boardList);
         return "board/list";
@@ -58,13 +57,19 @@ public class BoardController {
 
 
     // 게시글 상세보기 화면 요청
-    // http://localhost:8080/board/1
+    // http://localhost:80/board/1
     @GetMapping("/board/{id}")
     public String detailPage(@PathVariable(name = "id") Integer id, Model model) {
         // 유효성 검사 , 인증 검사
 
-        //Board board = boardNativeRepository.findById(id);
         Board board = boardPersistRepository.findById(id);
+        // board 는 연관관계가 User 엔티티와 ManyToOne 관계 설정이 되어있다.
+        // 직접 쿼리 구문을 작성하지 않을 때. 즉, 엔티티 매니저의 메서드로 객체를 조회 시
+        // 자동으로 JOIN 구문을 호출해줌
+        // 단, Fetch 전략에 따라 - EAGER, LAZY 전략에 따라 한번에 다 조인해서 가져오거나
+        // 필요할 때 한번 더 요청하는 것이 LAZY 전략
+        // 코드 사엥서 User 에 대한 정보를 요구 (현재 LAZY 전략)
+        // System.out.println(board.getUser().getUsername());
 
         model.addAttribute("board", board);
 

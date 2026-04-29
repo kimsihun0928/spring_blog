@@ -1,5 +1,6 @@
 package com.tenco.blog.board;
 
+import com.tenco.blog.user.User;
 import com.tenco.blog.util.MyDateUtil;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,9 +26,18 @@ public class Board {
     // IDENTITY 전략: 데이터베이스게 기본 AUTO_INCREMENT 기능 사용
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String username;
+    // private String username;
     private String title;
     private String content;
+
+    // 연관관계 설정 해줘야함
+    // 다대일 연관관계 : 여러 개 게시글이 하나의 사용자에게 속한다.
+    // FetchType 전략 : EAGER, LAZY
+    //   EAGER - 조회시 한번에 다 들고와라 (1번 게시글 조회 시 한 번에 조인까지해라)
+    //   LAZY -  처음부터 Board 조회할 때 User 정보를 가져오지마. 필요할 때 한번 더 조회해
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // 외래키 컬럼명 표시
+    private User user;
 
     // @CreationTimestamp : 하이버네이트가 제공하는 어노테이션
     // 특정 하나의 엔티티가 저장이 될 때 현재 시간을 자동으로 저장해 설정
@@ -43,7 +53,7 @@ public class Board {
 
     // 수정 편의 기능 만들기
     public void update(BoardRequest.UpdateDTO updateDTO) {
-        this.username = updateDTO.getUsername();
+        // this.username = updateDTO.getUsername();
         this.title = updateDTO.getTitle();
         this.content = updateDTO.getContent();
 

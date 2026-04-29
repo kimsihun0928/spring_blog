@@ -6,13 +6,13 @@
             <!-- 익명 게시글 작성   -->
             <form action="/board/save" method="post">
                 <div class="mb-3">
-                    <input type="text" name="username" placeholder="enter username">
+                    <input type="text" class="form-control" name="username" placeholder="enter username">
                 </div>
                 <div class="mb-3">
-                    <input type="text" name="title" placeholder="enter title">
+                    <input type="text" class="form-control" name="title" placeholder="enter title">
                 </div>
                 <div class="mb-3">
-                    <textarea type="text" rows="5" name="content" placeholder="enter content"></textarea>
+                    <textarea type="text" class="form-control" rows="5" name="content" placeholder="enter content"></textarea>
                 </div>
                 <button class="btn btn-primary">글쓰기 완료</button>
             </form>

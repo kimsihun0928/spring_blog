@@ -11,6 +11,11 @@ logging:
     com.tenco: DEBUG # 내 프로젝트는 DEBUG
 
 spring:
+  mustache:
+    servlet:
+      # 머스태치 템플릿 엔진에서 request 객체와 세션 객체에 접근할 수 있도록 허용
+      expose-session-attributes: true
+      expose-request-attributes: true
   #데이터베이스 연결 설정 (MySQL)
   datasource:
 #    driver-class-name: com.mysql.cj.jdbc.Driver

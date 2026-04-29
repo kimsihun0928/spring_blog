@@ -1,5 +1,23 @@
 {{> layout/header}}
-<div class="container p-5 flex-grow-1                               ">
-    여기는 회원 가입 화면
+<div class="container p-5 flex-grow-1">
+    <div class="card">
+        <div class="card-header">회원가입을 해주세요</div>
+        <div class="card-body">
+            <form action="/join" method="post">
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Enter username" name="username">
+                </div>
+
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Enter password" name="password">
+                </div>
+
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Enter email" name="email">
+                </div>
+                <button type="submit" class="btn btn-primary form-control">회원가입</button>
+            </form>
+        </div>
+    </div>
 </div>
 {{> layout/footer}}

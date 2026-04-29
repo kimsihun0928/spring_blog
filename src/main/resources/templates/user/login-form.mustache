@@ -1,5 +1,22 @@
 {{> layout/header}}
-<div>
-    여기는 로그인 화면
+<div class="container p-5 flex-grow-1">
+    <div class="card">
+        <div class="card-header">로그인을 해주세요</div>
+        <div class="card-body">
+            <!-- 자원의 요청은 GET 방식이 맞음
+                       예외적으로 로그인 요청은 Post 처리해주어야한다.
+                       보안적인 이슈 때문   -->
+            <form action="/login" method="post">
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Enter username" name="username">
+                </div>
+
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Enter password" name="password">
+                </div>
+                <button type="submit" class="btn btn-primary form-control">로그인</button>
+            </form>
+        </div>
+    </div>
 </div>
 {{> layout/footer}}

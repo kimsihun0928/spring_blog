@@ -14,6 +14,15 @@ public class UserRepository {
     // DI - 스프링 프레임 워크가 주소값 자동 주입
     private final EntityManager em;
 
+    public User findById(Integer id) {
+
+        User user = em.find(User.class, id);
+        if (user == null) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다.");
+        }
+        return user;
+    }
+
     // 회원 가입 요청 시 -- INSERT
     @Transactional
     public User save(User user) {
@@ -59,4 +68,12 @@ public class UserRepository {
 
     }
 
+    @Transactional
+    public User updateById(Integer id, UserRequest.UpdateDTO updateDTO) {
+
+        User userEntity = findById(id); // 영속성 컨텍스트에 관리되는 엔티티
+        userEntity.setPassword(updateDTO.getPassword()); // 객체의 상태값 변경
+
+        return userEntity;
+    }
 }

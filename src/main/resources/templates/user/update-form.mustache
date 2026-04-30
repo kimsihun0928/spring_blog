@@ -1,35 +1,24 @@
 {{> layout/header}}
-
 <div class="container p-5 flex-grow-1">
-
     <div class="card">
-        <div class="card-header"><b>글수정하기 화면입니다</b></div>
+        <div class="card-header"><b>회원수정을 해주세요</b></div>
         <div class="card-body">
-
-            <form action="/board/{{board.id}}/update" method="post">
+            <form action="/user/update" method="post">
                 <div class="mb-3">
-                    <input type="text" class="form-control"
-                           placeholder="Enter username"
-                           name="username"
-                           value="{{board.username}}">
+                    <input type="text" class="form-control" name="username" value="{{user.username}}" disabled>
                 </div>
 
                 <div class="mb-3">
-                    <input type="text" class="form-control"
-                           placeholder="Enter title"
-                           name="title"
-                           value="{{board.title}}">
-                </div>
-                <div class="mb-3">
-                    <textarea class="form-control" rows="5" name="content">{{board.content}}</textarea>
+                    <input type="text" class="form-control" name="password" value="{{user.password}}">
                 </div>
 
-                <!-- 수정 완료 버튼: 클릭시 폼 데이터가 POST로 전송됨 -->
-                <button class="btn btn-primary form-control">글수정하기완료</button>
+                <div class="mb-3">
+                    <input type="text" class="form-control" name="email" value="{{user.email}}" disabled>
+                </div>
+                <button class="btn btn-primary form-control">회원정보수정</button>
+
             </form>
-
         </div>
     </div>
 </div>
-
 {{> layout/footer}}

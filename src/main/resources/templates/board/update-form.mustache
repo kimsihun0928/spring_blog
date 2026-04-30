@@ -6,13 +6,13 @@
             <!-- 익명 게시글 작성   -->
             <form action="/board/{{id}}/update" method="post">
                 <div class="mb-3">
-                    <input type="text" name="username" placeholder="enter username" value="{{board.username}}">
+                    <input type="text" name="username" class="form-control" placeholder="enter username" value="{{board.user.username}}" readonly>
                 </div>
                 <div class="mb-3">
-                    <input type="text" name="title" placeholder="enter title", value="{{board.title}}">
+                    <input type="text" name="title" class="form-control" placeholder="enter title", value="{{board.title}}">
                 </div>
                 <div class="mb-3">
-                    <textarea type="text" rows="5" name="content" placeholder="enter content">{{board.content}}</textarea>
+                    <textarea type="text" rows="5" name="content" class="form-control" placeholder="enter content">{{board.content}}</textarea>
                 </div>
                 <button class="btn btn-primary">글 수정 완료</button>
             </form>

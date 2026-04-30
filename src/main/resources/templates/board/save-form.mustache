@@ -1,13 +1,10 @@
 {{> layout/header}}
+
 <div class="container p5 flex-grow-1">
     <div class="card">
         <div class="card-header"><b>글쓰기 화면입니다</b></div>
         <div class="card-body">
-            <!-- 익명 게시글 작성   -->
             <form action="/board/save" method="post">
-                <div class="mb-3">
-                    <input type="text" class="form-control" name="username" placeholder="enter username">
-                </div>
                 <div class="mb-3">
                     <input type="text" class="form-control" name="title" placeholder="enter title">
                 </div>

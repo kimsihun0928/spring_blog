@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,44 @@ public class UserController {
 
     private final HttpSession httpSession;
     private final UserRepository userRepository;
+
+    // 프로필 업데이트 기능 요청
+    @PostMapping("/user/update")
+    public String updateProc(UserRequest.UpdateDTO updateDTO, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        if (sessionUser == null) {
+            return "redirect:/login-form";
+        }
+        try {
+            updateDTO.validate();
+            // 더티 체킹 전략
+            User userEntity = userRepository.updateById(sessionUser.getId(), updateDTO);
+            // 세션 동기화 처리
+            session.setAttribute("sessionUser", userEntity);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return "redirect:/";
+    }
+
+
+    // 프로필 화면 요청
+    // 주소 설계 : http://localhost:80/user/update-form
+    @GetMapping("/user/update-form")
+    public String updateForm(HttpSession session, Model model) {
+        // 인증 검사
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        if (sessionUser == null) {
+            return "redirect:/login-form";
+        }
+
+        User userEntity = userRepository.findById(sessionUser.getId());
+        userEntity.setPassword("");
+        // 가방에 데이터 담아서 화면에 값 내려주기
+        model.addAttribute("user", userEntity);
+        return "user/update-form";
+    }
 
     // 로그인 화면 요청
     // 주소 설계 : http://localhost:80/login-form

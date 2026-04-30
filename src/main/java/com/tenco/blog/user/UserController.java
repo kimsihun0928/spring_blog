@@ -21,9 +21,7 @@ public class UserController {
     @PostMapping("/user/update")
     public String updateProc(UserRequest.UpdateDTO updateDTO, HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            return "redirect:/login-form";
-        }
+
         try {
             updateDTO.validate();
             // 더티 체킹 전략
@@ -44,9 +42,6 @@ public class UserController {
     public String updateForm(HttpSession session, Model model) {
         // 인증 검사
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            return "redirect:/login-form";
-        }
 
         User userEntity = userRepository.findById(sessionUser.getId());
         userEntity.setPassword("");
@@ -77,11 +72,6 @@ public class UserController {
 
         // 여기에 코드가 도달한다면 우리 DB 에 정상 사용자임을 논리적으로 확인됨
         httpSession.setAttribute("sessionUser", sessionUser);
-
-        System.out.println("로그인 성공");
-        System.out.println("로그인 사용자 : " + sessionUser.getUsername());
-        System.out.println("로그인 이메일 : " + sessionUser.getEmail());
-
         return "redirect:/";
     }
 
@@ -91,14 +81,12 @@ public class UserController {
         // 세션 메모리에 내 정보를 없애버림
         // 로그아웃
         httpSession.invalidate();
-
         return "redirect:/";
     }
 
 
     // 회원가입 화면 요청
     // 주소 설계 : http://localhost:80/join-form
-
     @GetMapping("/join-form")
     public String joinFormPage() {
         return "user/join-form";
@@ -114,9 +102,6 @@ public class UserController {
     // 파싱 전략 1 - key=value 구조 (@RequestParam 사용)
     // 파싱 전략 2 - Object DTO 설계
     public String joinProc(UserRequest.JoinDTO joinDTO) {
-        log.info("username " + joinDTO.getUsername());
-        log.info("password " + joinDTO.getPassword());
-        log.info("email " + joinDTO.getEmail());
 
         // 1. 유효성 검사하기
         joinDTO.validate(); // 유효성 검사 --> 오류 --> 예외 처리 넘어감
@@ -129,8 +114,6 @@ public class UserController {
         }
 
         userRepository.save(joinDTO.toEntity());
-        // TODO
-        // 로그인 화면으로 리다이렉트 처리 예정
-        return "redirect:/";
+        return "redirect:/login-form";
     }
 }

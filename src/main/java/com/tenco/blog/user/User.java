@@ -36,5 +36,11 @@ public class User {
         this.email = email;
         this.createdAt = createdAt;
     }
+
+    // 편의 기능 추가 - 회원 정보 수정
+    public void update(UserRequest.UpdateDTO updateDTO) {
+        this.password = updateDTO.getPassword();
+        // Dirty Checking 처리
+    }
 }
 

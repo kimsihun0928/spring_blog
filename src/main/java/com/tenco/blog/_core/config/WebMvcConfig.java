@@ -2,6 +2,7 @@ package com.tenco.blog._core.config;
 
 import com.tenco.blog._core.interceptor.LoginInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,10 +10,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 // 자바 코드로 스프링 부트 설정파일을 다룰 수 있다.
 
 @Configuration // IoC - 하나 이상의 IoC 처리를 하고 싶을 때 사용한다.
-@RequiredArgsConstructor // DI
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final LoginInterceptor loginInterceptor;
+    @Autowired // DI 처리
+    private LoginInterceptor loginInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

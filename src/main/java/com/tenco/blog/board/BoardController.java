@@ -45,7 +45,7 @@ public class BoardController {
         // 2. 유효성 검사
         User sessionUser = (User) session.getAttribute("sessionUser");
         saveDTO.validate();
-        boardService.save(saveDTO, sessionUser);
+        boardService.게시글작성(saveDTO, sessionUser);
         return "redirect:/";
 
     }
@@ -57,7 +57,9 @@ public class BoardController {
      */
     @GetMapping({"/", "index"})
     public String list(Model model) {
-        List<Board> boardList = boardService.findAll();
+        List<BoardResponse.ListDTO> boardList = boardService.게시글목록();
+        // OSIV 개념을 false로 설정했기 때문에 여기서 LAZY 요청을 하면 터져버린다.
+        // boardList.get(0).getUser().getUsername();
         model.addAttribute("boardList", boardList);
         return "board/list";
     }
@@ -69,7 +71,7 @@ public class BoardController {
     public String detailPage(@PathVariable(name = "id") Integer id, Model model) {
         // 유효성 검사 , 인증 검사
 
-        Board board = boardService.findById(id);
+        BoardResponse.DetailDTO detailDTO = boardService.게시글상세조회(id);
         // board 는 연관관계가 User 엔티티와 ManyToOne 관계 설정이 되어있다.
         // 직접 쿼리 구문을 작성하지 않을 때. 즉, 엔티티 매니저의 메서드로 객체를 조회 시
         // 자동으로 JOIN 구문을 호출해줌
@@ -78,7 +80,7 @@ public class BoardController {
         // 코드 사엥서 User 에 대한 정보를 요구 (현재 LAZY 전략)
         // System.out.println(board.getUser().getUsername());
 
-        model.addAttribute("board", board);
+        model.addAttribute("board", detailDTO);
 
         return "board/detail";
     }
@@ -90,8 +92,8 @@ public class BoardController {
     // /board/{{board.id}}/delete
     @PostMapping("/board/{id}/delete")
     public String deleteProc(@PathVariable(name = "id") Integer id, HttpSession session) {
-
-
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        boardService.게시글삭제(id, sessionUser);
         // PRG 패턴( Post-> Redirect -> Get) 적용
         return "redirect:/";
     }
@@ -104,7 +106,7 @@ public class BoardController {
 
         User sessionUser = (User) session.getAttribute("sessionUser");
         // findById <-- 상세보기 화면 요청이라서 누가 요청 가능 (즉 인가 처리 안되고 있음)
-        Board boardEntity = boardService.findByIdAndCheckOwner(id, sessionUser);
+        BoardResponse.DetailDTO boardEntity = boardService.게시글상세화면및인가처리(id, sessionUser);
         model.addAttribute("board", boardEntity);
         return "board/update-form";
     }
@@ -117,7 +119,7 @@ public class BoardController {
 
         User sessionUser = (User) session.getAttribute("sessionUser");
         updateDTO.validate();
-        boardService.updateById(id, updateDTO, sessionUser);
+        boardService.게시글수정(id, updateDTO, sessionUser);
 
         // 게시글 수정 완료 ---> 게시글 목록, 게시글 상세보기 화면
         // 리다이렉트는 뷰 리졸브 동작이 아닌 (내부 파일 찾는 것이 아니고)

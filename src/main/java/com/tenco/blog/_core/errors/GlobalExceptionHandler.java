@@ -8,11 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 // 모든 컨트롤러에서 발생하는 예외를 이 클래스에서 처리하겠다.
 // RuntimeException 이 발생되면 해당 이 파일로 예외 처리가 오게됨.
 @Slf4j
-@ControllerAdvice // IoC
+@ControllerAdvice // IoC --> 에러 페이지 찾아가는 녀석
+// @RestControllerAdvice // 에러를 데이터로 반환할 때
 public class GlobalExceptionHandler {
 
     // private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -28,25 +31,42 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception401.class)
+    @ResponseBody
     public String ex401(Exception401 e, HttpServletRequest request) {
-        log.warn("=== 401 Unauthorized 에러 발생 ===");
-        log.warn("요청 URL : {}", request.getRequestURL());
-        log.warn("에러 메시지 : {}", e.getMessage());
+        String script = "<script>" +
+                "alert(`로그인이 필요한 서비스입니다.`);" +
+                "location.href = '/login-form';" +
+                "</script>";
 
-        request.setAttribute("msg", e.getMessage());
-
-        return "err/401";
+        return script;
     }
 
+//    @ExceptionHandler(Exception403.class)
+//    public String ex403(Exception403 e, HttpServletRequest request) {
+//        log.warn("=== 403 Forbidden 에러 발생 ===");
+//        log.warn("요청 URL : {}", request.getRequestURL());
+//        log.warn("에러 메시지 : {}", e.getMessage());
+//
+//        request.setAttribute("msg", e.getMessage());
+//
+//        return "err/403";
+//    }
+
     @ExceptionHandler(Exception403.class)
+    @ResponseBody // 파일 찾지 말고 데이터 반환
     public String ex403(Exception403 e, HttpServletRequest request) {
-        log.warn("=== 403 Forbidden 에러 발생 ===");
-        log.warn("요청 URL : {}", request.getRequestURL());
-        log.warn("에러 메시지 : {}", e.getMessage());
 
-        request.setAttribute("msg", e.getMessage());
+//        String script = "<script>alert(' " + e.getMessage() + " ');" +
+//                "history.back();" +
+//                "</script>";
+        String script = """
+        <script>
+            alert('%s');
+            history.back();
+        </script>
+        """.formatted(e.getMessage());
 
-        return "err/403";
+        return script;
     }
 
     @ExceptionHandler(Exception404.class)

@@ -6,7 +6,7 @@
             <!-- 익명 게시글 작성   -->
             <form action="/board/{{id}}/update" method="post">
                 <div class="mb-3">
-                    <input type="text" name="username" class="form-control" placeholder="enter username" value="{{board.user.username}}" readonly>
+                    <input type="text" name="username" class="form-control" placeholder="enter username" value="{{board.username}}" readonly>
                 </div>
                 <div class="mb-3">
                     <input type="text" name="title" class="form-control" placeholder="enter title", value="{{board.title}}">

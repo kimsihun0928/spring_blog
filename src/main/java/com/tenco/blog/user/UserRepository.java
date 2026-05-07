@@ -34,6 +34,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByUsernameAndPassword(@Param("username") String username,
                                              @Param("password") String password);
 
+
     // 사용자 정보 수정 [더티 체킹 사용 예정]
     // 트랜잭션 내에서 조회된 객체 상태를 변경하면
     // 트랜잭션이 끝나는 시점에 JPA가 변경된 내용을 자동으로 감지해서

@@ -38,6 +38,11 @@ spring:
         - classpath:db/data.sql
 
   jpa:
+    # Open Session In View --> false 로 설정
+    # true (기본값) -> 뷰 랜더링까지 DB 세션 유지됨(LAZY 로딩 가능)
+    # false : 트랜잭션 종료 시 DB 세션 종료 (Controller, View에서 LAZY 로딩 불가)
+    # false 사용 시  Service 단에서 필요한 데이터를 모두 조회하고 응답 시에 DTO 설계방식으로 처리한다.
+    open-in-view: false
     hibernate:
       # create 애플리케이션 시작 시 테이블 새로 생성
       # 기존 데이터는 모두 삭제됨 (개발용)

@@ -1,5 +1,6 @@
 package com.tenco.blog.board;
 
+import com.tenco.blog._core.errors.Exception403;
 import com.tenco.blog._core.errors.Exception404;
 import com.tenco.blog.user.User;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +9,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-// 객체 지향 개념 = 단일 책임의 원칙
+/**
+ * 서비스 레이어
+ * 핵심 개념 :
+ * 1. 서비스 레이어의 역할:
+ * - 비즈니스 로직을 처리하는 계층
+ * - Controller 와 Response 사이에서 중간 계층을 담당
+ * - 트랜잭션 관리
+ * - 여러 Repository 를 조합해서 복잡한 비즈니스 로직 처리
+ * <p>
+ * 2. 계층 구조 (3Tier 아키텍처)
+ * Controller -> Service -> Repository -> DB
+ * <p>
+ * 3. @Service 어노테이션 사용
+ * - Spring에서 이 어노테이션을 확인해서 Bean(빈) 으로 등록한다.
+ */
 
 @Slf4j
 // 서비스 계층은 @Service 어노테이션으로 IoC 처리
@@ -22,16 +38,80 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
 
-    // 게시글 저장
-    // 데이터 수정이 필요하므로 깊은 트랜잭션 처리
-    // (읽기 전용 트랜잭션을 해제, 쓰기 전용 트랜잭션으로 변경)
+    /**
+     * 게시글 목록 조회
+     * <p>
+     * OSIV false 환경 대응 - 응답 DTO 설계
+     *
+     */
+    public List<BoardResponse.ListDTO> 게시글목록() {
+        // 1. 로그 기록 - 게시글 목록 조회
+        // 2. 데이터베이스 접근해서 모든 게시글 목록을 조회
+        // 3. 로그 기록 - (총 게시글 수)
+        // 4. 조회된 게시글 목록을 컨트롤러로 반환
+
+        log.info("게시글 목록 조회 서비스");
+        List<Board> boardList = boardRepository.findAllJoinUser();
+        log.info("게시글 목록 조회 완료 - 총 : {}", boardList.size());
+
+        // 방법 1 - 메서드 참조 사용
+        return boardList.stream()
+                .map(BoardResponse.ListDTO::new)
+                .collect(Collectors.toList());
+
+        // 방법 2 - 람다 표현식 사용
+        // stream().map() --> 기존 LIST 데이터를 변형(가공)해서 새로운 객체를 만들 때 사용하는 녀석
+//        boardList.stream().map(board ->
+//                        new BoardResponse.ListDTO(board))
+//                .collect(Collectors.toList());
+
+        // 방법 3 - for 문 사용 (전통적인 방법)
+//        for (Board board : boardList) {
+//            BoardResponse.ListDTO dto = new BoardResponse.ListDTO(board);
+//            dtoList.add(dto);
+//        }
+//
+//        return boardList;
+
+    }
+
+    /**
+     * 게시글 상세 조회
+     *
+     * @param id (Board PK)
+     * @return DeTailDTO 처리 (OSIV 대응)
+     */
+    public BoardResponse.DetailDTO 게시글상세조회(Integer id) {
+        // 1. 로그 기록 - 게시글 상세 조회 (id)
+        // 2. 데이터베이스 접근해서 해당 ID의 게시글 조회 (작성자 정보 포함)
+        // 3. 게시글이 존재하지 않으면 Exception404 로 예외 발생
+        // 4. 조회 성공 시 로그 기록 (제목, 작성자 정보)
+        // 5. 조회된 게시글 컨트롤러 단으로 반환
+
+        log.info("게시글 상세 조회 서비스");
+        // N + 1 문제를 해결하기 위해 한 번에 Board, User 가지고옴
+        Board boardEntity = boardRepository.findByIdJoinUser(id).orElseThrow(() -> {
+            log.warn("게시글 조회 실패 - ID : {}", id);
+            return new Exception404("해당하는 게시글을 찾을 수 없습니다.");
+        });
+
+        log.info("게시글 조회 완료 - 제목 : {}, 작성자 : {}",
+                boardEntity.getTitle(), boardEntity.getUser().getUsername());
+        return new BoardResponse.DetailDTO(boardEntity);
+    }
+
+    /**
+     * 게시글 작성
+     *
+     * @param saveDTO
+     * @param sessionUser (세션에서 가져온 사용자 정보)
+     */
     @Transactional
-    public Board save(BoardRequest.SaveDTO saveDTO, User sessionUser) {
+    public void 게시글작성(BoardRequest.SaveDTO saveDTO, User sessionUser) {
         // . 로그 기록 - 게시글 저장 요청 정보
         // 2. DTo 를 Entity 로 변환(작성자 정보 포함)
         // 3. 데이터베이스에 게시글 저장
         // 4. 저장 완료, 로그 기록
-        // 5. 저장된 게시글을 컨트롤 단으로 반환
 
         // 1
         log.info("게시글 저장 서비스 시작 - 제목 : {}, 작성자 : {}",
@@ -44,47 +124,38 @@ public class BoardService {
         // 4
         log.info("게시글 저장 완료 - ID : {}, 제목 : {}",
                 savedBoardEntity.getId(), savedBoardEntity.getTitle());
-        // 5
-        return savedBoardEntity;
     }
 
-    // 게시글 목록 조회
-    public List<Board> findAll() {
-        // 1. 로그 기록 - 게시글 목록 조회
-        // 2. 데이터베이스 접근해서 모든 게시글 목록을 조회
-        // 3. 로그 기록 - (총 게시글 수)
-        // 4. 조회된 게시글 목록을 컨트롤러로 반환
+    /**
+     * 게시글 상세 화면 요청(인가 처리 필요)
+     *
+     * @param id          (Board PK)
+     * @param sessionUser (로그인한 사용자 정보)
+     * @return BoardResponse.DetailDTO
+     */
+    public BoardResponse.DetailDTO 게시글상세화면및인가처리(Integer id, User sessionUser) {
 
-        log.info("게시글 목록 조회 서비스");
-        List<Board> boardList = boardRepository.findAllJoinUser();
-        log.info("게시글 목록 조회 완료 - 총 : {}", boardList.size());
-        return boardList;
+        log.info("게시글 상세 화면 및 인가 확인");
+        BoardResponse.DetailDTO detailDTO = 게시글상세조회(id);
+        if (!detailDTO.getUserId().equals(sessionUser.getId())) {
+            throw new Exception403("권한없음");
+        }
 
+        log.info("게시글 수정 조회 완료 - 제목 : {}, 작성자 : {}",
+                detailDTO.getTitle(), detailDTO.getUsername());
+        return detailDTO;
     }
 
-    // 게시글 상세 보기
-    public Board findById(Integer id) {
-        // 1. 로그 기록 - 게시글 상세 조회 (id)
-        // 2. 데이터베이스 접근해서 해당 ID의 게시글 조회 (작성자 정보 포함)
-        // 3. 게시글이 존재하지 않으면 Exception404 로 예외 발생
-        // 4. 조회 성공 시 로그 기록 (제목, 작성자 정보)
-        // 5. 조회된 게시글 컨트롤러 단으로 반환
-
-        log.info("게시글 상세 조회 서비스");
-        Board boardEntity = boardRepository.findByIdJoinUser(id).orElseThrow(() -> {
-            log.warn("게시글 조회 실패 - ID : {}", id);
-            return new Exception404("해당하는 게시글을 찾을 수 없습니다.");
-        });
-
-        log.info("게시글 조회 완료 - 제목 : {}, 작성자 : {}",
-                boardEntity.getTitle(), boardEntity.getUser().getUsername());
-
-        return boardEntity;
-    }
-
-    // 게시글 수정
+    /**
+     * 게시글 수정 기능 처리
+     *
+     * @param id          (Board PK)
+     * @param updateDTO
+     * @param sessionUser
+     * @return
+     */
     @Transactional
-    public Board updateById(Integer id, BoardRequest.UpdateDTO updateDTO, User sessionUser) {
+    public void 게시글수정(Integer id, BoardRequest.UpdateDTO updateDTO, User sessionUser) {
         // 1. 로그 기록 - 게시글 수정 요청 정보 (board pk,새 제목, 요청자)
         // 2. 수정하고자 하는 게시글 조회 (중간 삭제되는 경우도 있음)
         // 3. 권한 확인 (인가 처리)
@@ -94,9 +165,9 @@ public class BoardService {
         // 7. 수정된 게시글 반환
 
         log.info("게시글 수정 서비스");
-
-        Board boardEntity = findById(id);
-        boardEntity.isOwner(sessionUser.getId());
+        Board boardEntity = boardRepository.findByIdJoinUser(id).orElseThrow(() -> {
+            throw new Exception404("해당 게시글을 찾을 수 없습니다.");
+        });
 
         // 영속화 되어 있었던 객체의 title, content 의 내용이 변경됨
         boardEntity.update(updateDTO);
@@ -104,12 +175,16 @@ public class BoardService {
         log.info("게시글 수정 완료 - ID : {}, 새 제목 : {}",
                 boardEntity.getId(), boardEntity.getTitle());
 
-        return boardEntity;
     }
 
-    // 게시글 삭제 (권한 체크 포함)
+    /**
+     * 게시글 삭제 요청
+     *
+     * @param id          (Board PK)
+     * @param sessionUser
+     */
     @Transactional
-    public void deleteById(Integer id, User sessionUser) {
+    public void 게시글삭제(Integer id, User sessionUser) {
         // 1. 로그 기록 - 게시글 삭제 요청 정보 (board PK, 요청자)
         // 2. 삭제하려는 게시글 조회
         // 3. 권한 확인 - 게시글 작성자와 요청자가 동일한지 확인
@@ -118,30 +193,14 @@ public class BoardService {
         // 6. 삭제 완료 로그 기록
 
         log.info("게시글 삭제 서비스");
-        Board boardEntity = findById(id);
+        Board boardEntity = boardRepository.findById(id).orElseThrow(
+                () -> new Exception404("게시글을 찾을 수 없습니다."));
+
         boardEntity.isOwner(sessionUser.getId());
-
         boardRepository.deleteById(id);
-
         log.info("게시글 삭제 완료 - ID : {}", id);
 
     }
 
-    /**
-     * 게시글 수정 화면 요청(인가 처리 필요)
-     * @param id (Board PK)
-     * @param sessionUser (로그인한 사용자 정보)
-     * @return Board
-     */
-    public Board findByIdAndCheckOwner(Integer id, User sessionUser) {
-
-        log.info("게시글 수정 화면 조회 서비스");
-        Board boardEntity = findById(id);
-        boardEntity.isOwner(sessionUser.getId());
-
-        log.info("게시글 수정 조회 완료 - 제목 : {}, 작성자 : {}",
-                boardEntity.getTitle(), boardEntity.getUser().getUsername());
-        return boardEntity;
-    }
 
 }

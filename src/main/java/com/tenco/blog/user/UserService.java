@@ -2,7 +2,6 @@ package com.tenco.blog.user;
 
 import com.tenco.blog._core.errors.Exception400;
 import com.tenco.blog._core.errors.Exception404;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,7 @@ public class UserService {
      * @return User (저장된 사용자 정보)
      */
     @Transactional
-    public UserResponse.JoinDTO 회원가입(UserRequest.JoinDTO joinDTO) {
+    public User 회원가입(UserRequest.JoinDTO joinDTO) {
         // 1. 로그 기록 - 회원가입 요청 정보
         // 2. 사용자명 중복 검사 (데이터베이스 조회)
         // 3. username 존재하면 Exception400 예외 발생
@@ -44,10 +43,9 @@ public class UserService {
             log.warn("회원가입 실패 -  중복된 사용자명 : {}", user.getUsername());
             throw new Exception400("이미 존재하는 사용자명입니다.");
         });
-        User user = joinDTO.toEntity();
-        User savedUserEntity = userRepository.save(user);
+        User savedUserEntity = joinDTO.toEntity();
         log.info("회원가입 서비스 완료 -  ID : {}", savedUserEntity.getId());
-        return new UserResponse.JoinDTO(savedUserEntity);
+        return savedUserEntity;
 
     }
 
@@ -57,7 +55,7 @@ public class UserService {
      * @param loginDTO (사용자가 요청한 로그인 정보)
      * @return User(조회된 정보 세션 저장용)
      */
-    public UserResponse.sessionDTO 로그인(UserRequest.LoginDTO loginDTO) {
+    public User 로그인(UserRequest.LoginDTO loginDTO) {
         // 1. 로그 기록 - 로그인 요청 정보(사용자명)
         // 2. 사용자 이름과 비밀번호로 데이터베이스에서 조회
         // 3. 인증 정보가 일치하지 않으면 Exception400 예외 처리
@@ -72,7 +70,7 @@ public class UserService {
                 });
         log.info("로그인 성공! - 사용자명 : {}", loginDTO.getUsername());
 
-        return new UserResponse.sessionDTO(userEntity);
+        return userEntity;
     }
 
     /**
@@ -81,7 +79,7 @@ public class UserService {
      * @param id (User PK)
      * @return UserEntity
      */
-    public UserResponse.sessionDTO 회원정보수정화면(Integer id) {
+    public User 회원정보수정화면(Integer id) {
         log.info("사용자 정보 서비스 시작");
 
         User userEntity = userRepository.findById(id).orElseThrow(() -> {
@@ -89,7 +87,7 @@ public class UserService {
             return new Exception404("사용자 정보를 찾을 수 없습니다.");
         });
 
-        return new UserResponse.sessionDTO(userEntity);
+        return userEntity;
     }
 
     /**
@@ -100,7 +98,7 @@ public class UserService {
      * @return User
      */
     @Transactional
-    public UserResponse.sessionDTO 회원정보수정(Integer id, UserRequest.UpdateDTO updateDTO, HttpSession session) {
+    public User 회원정보수정(Integer id, UserRequest.UpdateDTO updateDTO) {
         // 1. 로그 기록 - 회원 정보 수정 요청 정보 (ID)
         // 2. 수정하려면 사용자 정보 조회
         // 3. 예외 처리 Exception400
@@ -113,10 +111,7 @@ public class UserService {
                 () -> new Exception404("사용자 정보를 찾을 수 없습니다."));
         userEntity.update(updateDTO);
 
-        log.info("회원정보 수정 완료 - 사용자 ID : {}", userEntity.getId());
-        UserResponse.sessionDTO sessionDTO = new UserResponse.sessionDTO(userEntity);
-        session.setAttribute("sessionUser", sessionDTO);
-        return sessionDTO;
+        return userEntity;
 
 
     }

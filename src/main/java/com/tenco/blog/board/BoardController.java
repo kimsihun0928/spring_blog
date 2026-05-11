@@ -1,6 +1,8 @@
 package com.tenco.blog.board;
 
 import com.tenco.blog._core.errors.*;
+import com.tenco.blog.reply.ReplyResponse;
+import com.tenco.blog.reply.ReplyService;
 import com.tenco.blog.user.User;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,8 @@ import java.util.List;
 public class BoardController {
 
     private final BoardService boardService;
+    // 댓글 목록 조회 시 필요
+    private final ReplyService replyService;
 
     /**
      * 게시글 작성 화면 요청
@@ -68,7 +72,7 @@ public class BoardController {
     // 게시글 상세보기 화면 요청
     // http://localhost:80/board/1
     @GetMapping("/board/{id}")
-    public String detailPage(@PathVariable(name = "id") Integer id, Model model) {
+    public String detailPage(@PathVariable(name = "id") Integer id, Model model, HttpSession session) {
         // 유효성 검사 , 인증 검사
 
         BoardResponse.DetailDTO detailDTO = boardService.게시글상세조회(id);
@@ -80,7 +84,14 @@ public class BoardController {
         // 코드 사엥서 User 에 대한 정보를 요구 (현재 LAZY 전략)
         // System.out.println(board.getUser().getUsername());
 
+        // 게시글 상세보기는 로그인 하지 않은 사용자도 들어올 수 있음
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        Integer sessionUserId = sessionUser != null ? sessionUser.getId() : null;
+        List<ReplyResponse.ListDTO> replyList = replyService.댓글목록조회(id, sessionUserId);
+
         model.addAttribute("board", detailDTO);
+        model.addAttribute("replyList", replyList);
+        model.addAttribute("checkIsOwner", detailDTO.checkIsOwner(sessionUserId));
 
         return "board/detail";
     }

@@ -20,7 +20,7 @@ public class LoginInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         HttpSession session = request.getSession();
-        UserResponse.sessionDTO sessionUser = (UserResponse.sessionDTO) session.getAttribute("sessionUser");
+        User sessionUser = (User) session.getAttribute("sessionUser");
         if (sessionUser == null) {
             throw new Exception401("로그인 먼저 해주세요.");
         }

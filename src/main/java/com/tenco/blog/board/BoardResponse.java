@@ -28,7 +28,7 @@ public class BoardResponse {
             if (board.getUser() != null) {
                 this.username = board.getUser().getUsername();
             }
-            if(board.getCreatedAt() != null) {
+            if (board.getCreatedAt() != null) {
                 this.createdAt = MyDateUtil.timestampFormat(board.getCreatedAt());
             }
         }
@@ -37,19 +37,32 @@ public class BoardResponse {
     // 게시글 상세보기 응답 DTO
     @Data
     public static class DetailDTO {
-        private Integer id;
+        private Integer id; // board PK
         private String title;
         private String content;
         private String username;
         private Integer userId; // user PK
+        private boolean isOwner;
 
         public DetailDTO(Board board) {
             this.id = board.getId();
             this.title = board.getTitle();
             this.content = board.getContent();
-            if(board.getUser() != null) {
+            if (board.getUser() != null) {
                 this.username = board.getUser().getUsername();
                 this.userId = board.getUser().getId();
+            }
+        }
+
+        // 소유자 확인
+        public boolean checkIsOwner(Integer sessionUserId) {
+            if (sessionUserId == null) {
+                return false;
+            }
+            if (sessionUserId.equals(this.userId)) {
+                return true;
+            } else {
+                return false;
             }
         }
     } // end of DetailDTO inner class

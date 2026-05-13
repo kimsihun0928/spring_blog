@@ -1,14 +1,16 @@
 package com.tenco.blog.user;
 
 import com.tenco.blog._core.errors.Exception400;
+import com.tenco.blog._core.errors.Exception403;
 import com.tenco.blog._core.errors.Exception404;
 import com.tenco.blog._core.errors.Exception500;
-import com.tenco.blog.util.FileUtil;
-import jakarta.servlet.http.HttpSession;
+import com.tenco.blog._core.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
 
 /**
  * User 관련 비즈니스 로직을 처리하는 Service 계층
@@ -132,10 +134,61 @@ public class UserService {
         log.info("회원 정보 수정 서비스 시작");
         User userEntity = userRepository.findById(id).orElseThrow(
                 () -> new Exception404("사용자 정보를 찾을 수 없습니다."));
-        userEntity.update(updateDTO);
+
+        // 프로필 이미지 처리 (사용자가 이미지를 보냈다면)
+        String uuidImageFileName = null;
+        if (updateDTO.getProfileImage() != null && !updateDTO.getProfileImage().isEmpty()) {
+            // 새 프로필 정보 수정 요청
+            // 1. 기존 프로필 사진이 있다면 삭제하고 새로 저장 (디스크, db수정)
+            // 2. 기존에는 프로필 이미지가 null 인 경우
+            String oldProfileImage = userEntity.getProfileImage(); // null, 기존 이미지명
+            // String newProfileImage = updateDTO.getProfileImage().getOriginalFilename();
+
+            if (!FileUtil.isImageFile(updateDTO.getProfileImage())) {
+                throw new Exception400("이미지 파일만 업로드 가능합니다.");
+            }
+
+            // 신규 이미지 저장
+            try {
+                uuidImageFileName = FileUtil.saveFile(updateDTO.getProfileImage(), FileUtil.IMAGES_DIR);
+                // 기존 이미지 삭제 처리 (있다면)
+                if (oldProfileImage != null) {
+                    FileUtil.deleteFile(oldProfileImage, FileUtil.IMAGES_DIR);
+                }
+
+            } catch (IOException e) {
+                throw new Exception500("프로필 이미지 파일 저장 실패");
+            }
+        }
+        // 더티 체킹 활용
+        userEntity.update(updateDTO, uuidImageFileName);
+        return userEntity;
+    }
+
+    @Transactional
+    public User 프로필이미지삭제(Integer id) {
+        User userEntity = userRepository.findById(id).orElseThrow(
+                () -> new Exception404("사용자를 찾을 수 없습니다."));
+
+        // 인가 처리
+        if (userEntity.getId().equals(id) == false) {
+            throw new Exception403("프로필 이미지 삭제 권한 없음");
+        }
+
+        // 3. 이미지가 등록되어 있으면 삭제 처리
+        String profileImage = userEntity.getProfileImage();
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // 내 서버 컴퓨터에 저장된(C://upload) 파일 삭제
+            try {
+                FileUtil.deleteFile(profileImage, FileUtil.IMAGES_DIR);
+            } catch (IOException e) {
+                System.err.println("프로필 이미지 삭제시 오류 발생" + e.getMessage());
+            }
+        }
+        // 1차 캐시에 저장된 User 정보 수정 - 트랜잭션이 종료되면 반영(더티 체킹)
+        userEntity.setProfileImage(null);
 
         return userEntity;
-
 
     }
 }

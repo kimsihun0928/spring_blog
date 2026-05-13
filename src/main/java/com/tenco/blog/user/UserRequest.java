@@ -72,6 +72,7 @@ public class UserRequest {
     public static class UpdateDTO {
 
         private String password;
+        private MultipartFile profileImage;
 
         public void validate() {
             if (password == null || password.isBlank()) {

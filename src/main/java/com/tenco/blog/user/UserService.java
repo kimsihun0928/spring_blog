@@ -2,6 +2,8 @@ package com.tenco.blog.user;
 
 import com.tenco.blog._core.errors.Exception400;
 import com.tenco.blog._core.errors.Exception404;
+import com.tenco.blog._core.errors.Exception500;
+import com.tenco.blog.util.FileUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +45,28 @@ public class UserService {
             log.warn("회원가입 실패 -  중복된 사용자명 : {}", user.getUsername());
             throw new Exception400("이미 존재하는 사용자명입니다.");
         });
-        User savedUserEntity = joinDTO.toEntity();
+
+        // 프로필 이미지 저장 기능 구현 (선택사항임)
+        String profileImageFilename = null;
+        if (joinDTO.getProfileImage() != null && joinDTO.getProfileImage().isEmpty() == false) {
+            // 사용자가 프로필 이미지를 업로드 한 경우
+            // 이미지 파일이 맞는지 확인
+            try {
+                if (FileUtil.isImageFile(joinDTO.getProfileImage()) == false) {
+                    throw new Exception400("이미지 파일만 업로드 가능합니다");
+                }
+                profileImageFilename = FileUtil.saveFile(joinDTO.getProfileImage(), FileUtil.IMAGES_DIR);
+            } catch (Exception e) {
+                // 디스크 공간이 없거나, 권한 없음
+                throw new Exception500("프로필 이미지 저장 실패");
+            }
+
+
+        }
+
+        // http://192.168.4.101:8080/join-form
+        User userEntity = joinDTO.toEntity(profileImageFilename);
+        User savedUserEntity = userRepository.save(userEntity);
         log.info("회원가입 서비스 완료 -  ID : {}", savedUserEntity.getId());
         return savedUserEntity;
 

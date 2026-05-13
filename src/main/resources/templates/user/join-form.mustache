@@ -3,17 +3,31 @@
     <div class="card">
         <div class="card-header">회원가입을 해주세요</div>
         <div class="card-body">
-            <form action="/join" method="post">
+            <!--
+                 중요!
+                 파일 업로드 사용 시 method 는 POST
+                 enctype 을 반드시 multipart/form-data 로 설정해주어야한다.
+                 설정 안하면 파일 데이터를 서버측에서 받을 수 없음
+                 (form 태그 사용 시 서버 측으로 파일 데이터를 보내는 방법)
+                 -->
+            <form action="/join" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Enter username" name="username">
+                    <input type="text" class="form-control" placeholder="Enter username" name="username" value="ssar2">
                 </div>
 
                 <div class="mb-3">
-                    <input type="password" class="form-control" placeholder="Enter password" name="password">
+                    <input type="password" class="form-control" placeholder="Enter password" name="password" value="1234">
                 </div>
 
                 <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Enter email" name="email">
+                    <input type="text" class="form-control" placeholder="Enter email" name="email" value="sar2@naver.com">
+                </div>
+                <!-- 프로필 이미지 등록 필드(선택 사항)  -->
+                <div class="mb-3">
+                    <label for="profileImage" class="formm-label">프로필 사진(선택사항)</label>
+                    <input type="file" id="profileImage" class="form-control" name="profileImage" accept="image/*">
+                    <small class="form-text text-muted">이미지 파일만 업로드 가능합니다(JPG, PNG, GIF 등)</small>
+                    <small class="form-text text-muted d-block mt-1">⭐  프로필 사진을 등록하지 않아도 회원가입 가능 </small>
                 </div>
                 <button type="submit" class="btn btn-primary form-control">회원가입</button>
             </form>

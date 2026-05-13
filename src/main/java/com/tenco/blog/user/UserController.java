@@ -8,12 +8,25 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.io.IOException;
+
 @Slf4j
 @Controller // IoC
 @RequiredArgsConstructor // DI 처리
 public class UserController {
 
     private final UserService userService;
+
+    // 마이페이지 요청 화면
+
+    @GetMapping("/user/detail")
+    public String detailPage(Model model, HttpSession session) {
+
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        model.addAttribute("user", sessionUser);
+
+        return "user/detail";
+    }
 
     // 프로필 업데이트 기능 요청
     @PostMapping("/user/update")
@@ -77,7 +90,7 @@ public class UserController {
     // 메세지 컨버터라는 녀석이 구문을 분석해서 자동으로 파싱 처리 및 매핑해준다.
     // 파싱 전략 1 - key=value 구조 (@RequestParam 사용)
     // 파싱 전략 2 - Object DTO 설계
-    public String joinProc(UserRequest.JoinDTO joinDTO) {
+    public String joinProc(UserRequest.JoinDTO joinDTO){
 
         // 인증 검사 x, 유효성 검사 o
         joinDTO.validate(); // 유효성 검사 --> 오류 --> 예외 처리 넘어감

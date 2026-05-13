@@ -1,17 +1,15 @@
 package com.tenco.blog.board;
 
-import com.tenco.blog._core.errors.*;
 import com.tenco.blog.reply.ReplyResponse;
 import com.tenco.blog.reply.ReplyService;
 import com.tenco.blog.user.User;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,91 +19,89 @@ import java.util.List;
 public class BoardController {
 
     private final BoardService boardService;
-    // 댓글 목록 조회 시 필요
+    // 댓글 목록 조회시 필요
     private final ReplyService replyService;
 
     /**
      * 게시글 작성 화면 요청
-     *
      * @return 페이지 반환
-     * 주소설계 : http://localhost:80/board/save-form
+     * 주소설계 : http://localhost:8080/board/save-form
      */
     @GetMapping("/board/save-form")
     public String saveForm(HttpSession httpSession) {
-        // 1. 인증 검사는 LoginInterceptor에서함
         return "board/save-form";
     }
 
     /**
      * 게시글 작성 기능 요청
-     *
      * @return 페이지 반환
      * 주소설계 : http://localhost:8080/board/save-form
      */
     @PostMapping("/board/save")
-    // 사용자 요청 -> HTTP 요청 메시지(Post)
     public String saveProc(BoardRequest.SaveDTO saveDTO, HttpSession session) {
-        // 1. 인증 검사 - 인터셉터 처리됨
-        // 2. 유효성 검사
         User sessionUser = (User) session.getAttribute("sessionUser");
         saveDTO.validate();
         boardService.게시글작성(saveDTO, sessionUser);
         return "redirect:/";
-
     }
 
 
     /**
      * 게시글 목록 화면 요청
-     * 주소설계 : http://localhost:80/
+     * 주소설계 : http://localhost:8080/
      */
-    @GetMapping({"/", "index"})
-    public String list(Model model) {
-        List<BoardResponse.ListDTO> boardList = boardService.게시글목록();
-        // OSIV 개념을 false로 설정했기 때문에 여기서 LAZY 요청을 하면 터져버린다.
-        // boardList.get(0).getUser().getUsername();
-        model.addAttribute("boardList", boardList);
+    // 페이징 처리 주소설계 : http://localhost:8080/?page=1&size=2
+    // 페이징 처리 주소설계 : http://localhost:8080/ <--- defaultValue 로 동작
+    // @RequestParam(name= "page") 필수 값 처리
+    @GetMapping({"/board/list", "/"})
+    public String list(Model model,
+                       @RequestParam(name = "page", defaultValue = "1") Integer page,
+                       @RequestParam(name = "size", defaultValue = "5") Integer size,
+                       @RequestParam(name = "keyword", required = false) String keyword) {
+
+
+        BoardResponse.PageDTO boardPage = boardService.게시글목록(page, size, keyword);
+        model.addAttribute("boardPage", boardPage);
+        model.addAttribute("keyword", keyword != null ? keyword : "");
         return "board/list";
     }
 
+//    @GetMapping({"/", "index"})
+//    public String list(Model model) {
+//        List<BoardResponse.ListDTO> boardList = boardService.게시글목록();
+//        // OSIV 개념을 false 설정했기 때문에 여기서 LAZY 요청을 하면 터져 버린다.
+//        ///boardList.get(0).getUser().getUsername();
+//
+//        model.addAttribute("boardList", boardList);
+//        return "board/list";
+//    }
 
     // 게시글 상세보기 화면 요청
-    // http://localhost:80/board/1
+    // http://localhost:8080/board/1
     @GetMapping("/board/{id}")
     public String detailPage(@PathVariable(name = "id") Integer id, Model model, HttpSession session) {
-        // 유효성 검사 , 인증 검사
 
         BoardResponse.DetailDTO detailDTO = boardService.게시글상세조회(id);
-        // board 는 연관관계가 User 엔티티와 ManyToOne 관계 설정이 되어있다.
-        // 직접 쿼리 구문을 작성하지 않을 때. 즉, 엔티티 매니저의 메서드로 객체를 조회 시
-        // 자동으로 JOIN 구문을 호출해줌
-        // 단, Fetch 전략에 따라 - EAGER, LAZY 전략에 따라 한번에 다 조인해서 가져오거나
-        // 필요할 때 한번 더 요청하는 것이 LAZY 전략
-        // 코드 사엥서 User 에 대한 정보를 요구 (현재 LAZY 전략)
-        // System.out.println(board.getUser().getUsername());
 
         // 게시글 상세보기는 로그인 하지 않은 사용자도 들어올 수 있음
         User sessionUser = (User) session.getAttribute("sessionUser");
         Integer sessionUserId = sessionUser != null ? sessionUser.getId() : null;
         List<ReplyResponse.ListDTO> replyList = replyService.댓글목록조회(id, sessionUserId);
 
+        // view 에 데이터 전달
         model.addAttribute("board", detailDTO);
-        model.addAttribute("replyList", replyList);
         model.addAttribute("checkIsOwner", detailDTO.checkIsOwner(sessionUserId));
+        model.addAttribute("replyList", replyList);
 
         return "board/detail";
     }
 
+
     // 삭제 기능 요청
-    // 1. 로그인 여부 확인
-    // 2. 삭제할 게시글이 본인이 작성한 글인지 확인 (권한 확인, 인가 처리)
-    // 3. 인가 처리 후 삭제 진행
-    // /board/{{board.id}}/delete
     @PostMapping("/board/{id}/delete")
     public String deleteProc(@PathVariable(name = "id") Integer id, HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
         boardService.게시글삭제(id, sessionUser);
-        // PRG 패턴( Post-> Redirect -> Get) 적용
         return "redirect:/";
     }
 
@@ -114,27 +110,19 @@ public class BoardController {
     // 게시글 수정 화면 요청
     @GetMapping("/board/{id}/update-form")
     public String updateFormPage(@PathVariable(name = "id") Integer id, Model model, HttpSession session) {
-
         User sessionUser = (User) session.getAttribute("sessionUser");
-        // findById <-- 상세보기 화면 요청이라서 누가 요청 가능 (즉 인가 처리 안되고 있음)
-        BoardResponse.DetailDTO boardEntity = boardService.게시글상세화면및인가처리(id, sessionUser);
-        model.addAttribute("board", boardEntity);
+        BoardResponse.DetailDTO detailDTO = boardService.게시글상세화면및인가처리(id, sessionUser);
+        model.addAttribute("board", detailDTO);
         return "board/update-form";
     }
 
-    // /board/{id}/update
+
     @PostMapping("/board/{id}/update")
-    // 메세지 컨버터란 객체가 동작해서 자동으로 객체를 생성하고 값을 매핑해준다.
     public String updateProc(@PathVariable(name = "id") Integer id,
                              BoardRequest.UpdateDTO updateDTO, HttpSession session) {
-
-        User sessionUser = (User) session.getAttribute("sessionUser");
+        User sessionUser =  (User) session.getAttribute("sessionUser");
         updateDTO.validate();
         boardService.게시글수정(id, updateDTO, sessionUser);
-
-        // 게시글 수정 완료 ---> 게시글 목록, 게시글 상세보기 화면
-        // 리다이렉트는 뷰 리졸브 동작이 아닌 (내부 파일 찾는 것이 아니고)
-        // 그냥 새로은 HTTP Get 요청이다.
         return "redirect:/board/" + id;
     }
 

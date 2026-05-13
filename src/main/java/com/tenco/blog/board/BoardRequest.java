@@ -10,14 +10,15 @@ public class BoardRequest {
 
     @Data
     @Builder
-    // 정적 내부 클래스
     public static class SaveDTO {
+
         private String title;
         private String content;
 
+        // 편의 기능 설계 가능
+        // DTO 에서 Entity로 변환해주는 편의 메서드
         public Board toEntity(User user) {
             return Board.builder()
-                    // .username(username)
                     .title(title)
                     .user(user)
                     .content(content)
@@ -25,13 +26,11 @@ public class BoardRequest {
         }
 
         public void validate() {
-            // 유효성 검사
-            if (title == null || title.trim().isEmpty()) {
-                throw new IllegalArgumentException("제목은 필수 입력 항목입니다.");
+            if(title == null || title.trim().isEmpty()) {
+                throw new IllegalArgumentException("제목은 필수입니다");
             }
-
-            if (content == null || content.length() < 3) {
-                throw new IllegalArgumentException("내용은 3글자 이상 작성");
+            if(content == null || content.length() < 3) {
+                throw new IllegalArgumentException("내용은 3글자 이상 작성해야 합니다.");
             }
         }
 
@@ -43,16 +42,16 @@ public class BoardRequest {
         private String title;
         private String content;
 
-        // 게시글 수정 시 유효성 검사 편의 메서드
+        // 게시글 수정시 유효성 검사 편의 메서드
         public void validate() {
-            // 유효성 검사
-            if (title == null || title.trim().isEmpty()) {
-                throw new IllegalArgumentException("제목은 필수 입력 항목입니다.");
+            if(title == null || title.trim().isEmpty()) {
+                throw new IllegalArgumentException("제목은 필수입니다");
             }
-
-            if (content == null || content.length() < 3) {
-                throw new IllegalArgumentException("내용은 3글자 이상 작성");
+            if(content== null || content.length() < 3) {
+                throw new IllegalArgumentException("내용은 3글자 이상 작성해야 합니다.");
             }
         }
+
     }
+
 }

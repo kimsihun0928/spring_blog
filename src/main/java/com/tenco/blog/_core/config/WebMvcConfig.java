@@ -1,13 +1,17 @@
 package com.tenco.blog._core.config;
 
+import com.tenco.blog._core.interceptor.AdminInterceptor;
 import com.tenco.blog._core.interceptor.LoginInterceptor;
 import com.tenco.blog._core.interceptor.SessionInterceptor;
+import com.tenco.blog._core.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.nio.file.Paths;
 
 // 자바 코드로 스프링 부트 설정파일을 다룰 수 있다.
 
@@ -18,6 +22,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     private LoginInterceptor loginInterceptor;
     @Autowired // DI 처리
     private SessionInterceptor sessionInterceptor;
+    @Autowired
+    private AdminInterceptor adminInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -28,7 +34,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         // 인증 처리 인터셉터 동작함
         registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/board/**", "/user/**", "/reply/**")
+                .addPathPatterns("/board/**", "/user/**", "/reply/**", "/admin/** ")
                 .excludePathPatterns(
                         // 로그인 관련 (인증이 필요 없는 페이지)
                         "/login-form", // 로그인 화면 요청 시
@@ -52,6 +58,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 );
 
 
+        // 관리자 페이지 요청이 들어왔을 때 1단계 로그인 여부 확인, 2단계 Role확인해서
+        // ADMIN 일 경우만 관리자 페이지로 이동 가능하게 처리
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/admin/**");
+
     }
 
     // 정적 리소스 핸들러 설정
@@ -62,9 +73,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String externalPath = Paths.get(FileUtil.IMAGES_DIR).toString();
         registry.addResourceHandler("/images/**")
                 // 추후 C:upload/
                 // C:\\upload
-                .addResourceLocations("file:///C:/upload/");
+                .addResourceLocations("file:" +externalPath);
     }
 }

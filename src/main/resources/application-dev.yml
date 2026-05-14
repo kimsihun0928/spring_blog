@@ -38,7 +38,8 @@ spring:
 #     초기 데이터 설정
   sql:
     init:
-      mode: always
+      mode: always  #외부 DB(MySQL) 에서도 실행되도록 설정
+      #mode: never # 절대 실행 안됨
       data-locations:
         - classpath:db/data.sql
 

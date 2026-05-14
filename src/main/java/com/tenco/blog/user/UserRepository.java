@@ -39,4 +39,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // 트랜잭션 내에서 조회된 객체 상태를 변경하면
     // 트랜잭션이 끝나는 시점에 JPA가 변경된 내용을 자동으로 감지해서
     // DB에 UPDATE 쿼리를 날려주는 기능을 말한다.
+
+
+    // 사용자 명과 비밀번호로 사용자 조회(로그인용) + Role 정보 한번에 조회
+    @Query("""
+                SELECT DISTINCT u FROM User u
+                LEFT JOIN FETCH u.roles r
+                WHERE u.username = :username AND u.password = :password
+            """)
+    Optional<User> findByUsernameAndPasswordWithRoles(@Param("username") String username,
+                                             @Param("password") String password);
 }

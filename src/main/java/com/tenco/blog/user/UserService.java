@@ -66,8 +66,8 @@ public class UserService {
 
         }
 
-        // http://192.168.4.101:8080/join-form
         User userEntity = joinDTO.toEntity(profileImageFilename);
+        userEntity.addRole(Role.USER);
         User savedUserEntity = userRepository.save(userEntity);
         log.info("회원가입 서비스 완료 -  ID : {}", savedUserEntity.getId());
         return savedUserEntity;
@@ -88,7 +88,7 @@ public class UserService {
         // 5. 인증된 사용자 정보 컨트롤러 단으로 반환(세션 저장용)
 
         log.info("로그인 서비스 시작");
-        User userEntity = userRepository.findByUsernameAndPassword(loginDTO.getUsername(), loginDTO.getPassword())
+        User userEntity = userRepository.findByUsernameAndPasswordWithRoles(loginDTO.getUsername(), loginDTO.getPassword())
                 .orElseThrow(() -> {
                     log.warn("로그인 실패 - 사용자 이름 또는 사용자 비번 잘못 입력");
                     return new Exception400("사용자명 또는 비밀번호가 올바르지 않습니다.");

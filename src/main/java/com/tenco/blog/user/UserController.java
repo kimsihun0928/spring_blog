@@ -1,9 +1,11 @@
 package com.tenco.blog.user;
 
 import com.tenco.blog._core.util.Define;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,20 @@ import java.io.IOException;
 public class UserController {
 
     private final UserService userService;
+
+    // 초기 파라미터 값을 가져오는 방법
+    @Value("${oauth.kakao.client-id}")
+    private String kakaoClientId;
+
+    @Value("${oauth.kakao.client-secret}")
+    private String kakaoClientSecret;
+
+    // 테스트용 <-- 서버 실행 시 한번 이 메서드 호출해
+    @PostConstruct
+    public void init() {
+        log.info("현재 적용된 클라이언트 아이디 확인 : " + kakaoClientId);
+        log.info("현재 적용된 클라이언트 시크릿 확인 : " + kakaoClientSecret);
+    }
 
     // 프로필 이미지 삭제 요청
 
@@ -50,7 +66,7 @@ public class UserController {
         User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
 
         // 프로필 이미지 변경 요청이 왔을 때 기존의 비밀번호 저장
-        if(updateDTO.getPassword() == null || updateDTO.getPassword().isBlank()) {
+        if (updateDTO.getPassword() == null || updateDTO.getPassword().isBlank()) {
             updateDTO.setPassword(sessionUser.getPassword());
         }
         updateDTO.validate();
@@ -111,7 +127,7 @@ public class UserController {
     // 메세지 컨버터라는 녀석이 구문을 분석해서 자동으로 파싱 처리 및 매핑해준다.
     // 파싱 전략 1 - key=value 구조 (@RequestParam 사용)
     // 파싱 전략 2 - Object DTO 설계
-    public String joinProc(UserRequest.JoinDTO joinDTO){
+    public String joinProc(UserRequest.JoinDTO joinDTO) {
 
         // 인증 검사 x, 유효성 검사 o
         joinDTO.validate(); // 유효성 검사 --> 오류 --> 예외 처리 넘어감

@@ -21,7 +21,6 @@ public class GlobalExceptionHandler {
 
     // private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(Exception400.class)
-    @ResponseBody
     public String ex400(Exception400 e, HttpServletRequest request) {
         log.warn("=== 400 Bad Request 에러 발생 ===");
         log.warn("요청 URL : {}", request.getRequestURL());

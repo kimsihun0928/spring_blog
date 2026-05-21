@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
@@ -62,6 +63,10 @@ public class User {
     @JoinColumn(name = "user_id")
     private List<UserRole> roles = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false) // null 허용 안함
+    @ColumnDefault("'LOCAL'") // 어노테이션으로 디폴트값 선언 방법 ( 문자열 일 경우 ' ' 반드시 사용)
+    private OAuthProvider oAuthProvider;
 
     @Builder
     public User(Integer id, String username, String password,
@@ -76,10 +81,13 @@ public class User {
     }
 
     // 편의 기능 추가 - 회원 정보 수정
-    public void update(UserRequest.UpdateDTO updateDTO, String newProfileImageFileName) {
-        this.password = updateDTO.getPassword();
-        this.profileImage = newProfileImageFileName;
-        // Dirty Checking 처리
+    public void update(UserRequest.UpdateDTO updateDTO) {
+        if (updateDTO.getPassword() != null) {
+            this.password = updateDTO.getPassword();
+        }
+        if (updateDTO.getProfileImageName() != null) {
+            this.profileImage = updateDTO.getProfileImageName();
+        }
     }
 
 
@@ -97,12 +105,12 @@ public class User {
     // boolean isAdmin = user.hasRole(Role.ADMIN);
     public boolean hasRole(Role role) {
         // 1. 방어적 코드 작성
-        if(this.roles == null || this.roles.isEmpty()) {
+        if (this.roles == null || this.roles.isEmpty()) {
             // Role 자체가 설정되지 않은 상태
             return false;
         }
 
-        for(UserRole userRole: this.roles) {
+        for (UserRole userRole : this.roles) {
             if (userRole.getRole() == role) {
                 return true;
             }
@@ -120,6 +128,23 @@ public class User {
         return isAdmin() ? "ADMIN" : "USER";
     }
 
+    // 머스태치 화면엥서 사용할 편의 메서드2
+    public String getProfilePath() {
+        if (this.profileImage == null) {
+            return null;
+        }
+        // 이미지 경로가 http 로 시작 (소셜 가입)
+        if (this.profileImage.startsWith("http")) {
+            return this.profileImage;
+        }
+        // 로컬 이미지
+        return "/images/" + this.profileImage;
+    }
 
+    // 머스태치 화면에서 사용할 편의 메서드 3
+    public boolean isLocal() {
+        // true -> 이메일 가입자를 의미 함
+        return this.oAuthProvider == OAuthProvider.LOCAL;
+    }
 }
 

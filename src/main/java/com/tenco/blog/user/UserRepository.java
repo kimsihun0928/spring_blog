@@ -45,8 +45,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("""
                 SELECT DISTINCT u FROM User u
                 LEFT JOIN FETCH u.roles r
-                WHERE u.username = :username AND u.password = :password
+                WHERE u.username = :username
             """)
-    Optional<User> findByUsernameAndPasswordWithRoles(@Param("username") String username,
-                                             @Param("password") String password);
+    Optional<User> findByUsernameWithRoles(@Param("username") String username);
 }

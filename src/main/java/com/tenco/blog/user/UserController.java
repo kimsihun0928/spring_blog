@@ -34,6 +34,9 @@ public class UserController {
     @Value("${oauth.kakao.client-secret}")
     private String kakaoClientSecret;
 
+    @Value("${tenco.key}")
+    private String tencoKey;
+
     // 테스트용 <-- 서버 실행 시 한번 이 메서드 호출해
     @PostConstruct
     public void init() {
@@ -109,15 +112,13 @@ public class UserController {
             UserRequest.JoinDTO joinDTO = new UserRequest.JoinDTO();
             joinDTO.setUsername(username);
             joinDTO.setEmail(null);
-            joinDTO.setPassword("aaaa");
+            joinDTO.setPassword("1234");
             // joinDTO.setProfileImage();
-            userEntity = userService.회원가입(joinDTO);
-            userEntity.setProfileImage(profile.getProfileImageUrl());
+            userEntity = userService.소셜회원가입(joinDTO, profile.getProfileImageUrl());
         }
 
         // 세션 정보 저장
         session.setAttribute(Define.SESSION_USER, userEntity);
-
         return "redirect:/board/list";
     }
 
@@ -152,12 +153,6 @@ public class UserController {
     public String updateProc(UserRequest.UpdateDTO updateDTO, HttpSession session) {
         // 회원 정보 수정 요청 시 기본 비밀번호 null  이고 프로필 이미지만 수정 요청
         User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
-
-        // 프로필 이미지 변경 요청이 왔을 때 기존의 비밀번호 저장
-        if (updateDTO.getPassword() == null || updateDTO.getPassword().isBlank()) {
-            updateDTO.setPassword(sessionUser.getPassword());
-        }
-        updateDTO.validate();
         User updateUser = userService.회원정보수정(sessionUser.getId(), updateDTO);
         session.setAttribute(Define.SESSION_USER, updateUser);
         return "redirect:/";

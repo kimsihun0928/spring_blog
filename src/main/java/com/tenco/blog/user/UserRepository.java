@@ -48,4 +48,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                 WHERE u.username = :username
             """)
     Optional<User> findByUsernameWithRoles(@Param("username") String username);
+
+    //  이메일 조회(중복 이메일 체크 확인용)
+    @Query("""
+    SELECT u FROM User u WHERE u.email = :email
+""")
+    Optional<User> findByEmail(@Param("email") String email);
+
 }

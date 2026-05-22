@@ -25,6 +25,8 @@ public class User {
     private String username;
 
     private String password;
+
+    @Column(unique = true)
     private String email;
     // 엔티티가 영속화 될 때 자동으로 현재 시간을 주입해라 pc --> db
     @CreationTimestamp
@@ -71,13 +73,15 @@ public class User {
     @Builder
     public User(Integer id, String username, String password,
                 String email, Timestamp createdAt,
-                String profileImage) {
+                String profileImage, OAuthProvider oAuthProvider) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
         this.createdAt = createdAt;
         this.profileImage = profileImage;
+
+        this.oAuthProvider = (oAuthProvider != null) ? oAuthProvider : OAuthProvider.LOCAL;
     }
 
     // 편의 기능 추가 - 회원 정보 수정

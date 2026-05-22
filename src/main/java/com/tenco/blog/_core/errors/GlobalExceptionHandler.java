@@ -21,14 +21,20 @@ public class GlobalExceptionHandler {
 
     // private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(Exception400.class)
+    @ResponseBody
     public String ex400(Exception400 e, HttpServletRequest request) {
         log.warn("=== 400 Bad Request 에러 발생 ===");
         log.warn("요청 URL : {}", request.getRequestURL());
         log.warn("에러 메시지 : {}", e.getMessage());
 
-        request.setAttribute("msg", e.getMessage());
-
-        return "err/400";
+        String message = e.getMessage() != null ? e.getMessage() : "잘못된 요청입니다";
+        String escapeMessage = message.replace("'", "\\'");
+        return """
+                <script>
+                    alert('%s');
+                    history.back();
+                </script>
+                """.formatted(escapeMessage);
     }
 
     @ExceptionHandler(Exception401.class)

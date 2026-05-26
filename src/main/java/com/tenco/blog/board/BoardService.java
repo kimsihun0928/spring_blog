@@ -2,6 +2,7 @@ package com.tenco.blog.board;
 
 import com.tenco.blog._core.errors.Exception403;
 import com.tenco.blog._core.errors.Exception404;
+import com.tenco.blog.purchase.PurchaseService;
 import com.tenco.blog.reply.ReplyRepository;
 import com.tenco.blog.reply.ReplyResponse;
 import com.tenco.blog.user.User;
@@ -43,6 +44,7 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
     private final ReplyRepository replyRepository;
+    private final PurchaseService purchaseService;
 //    /**
 //     * 게시글 목록 조회
 //     * OSIV false 환경 대응 - 응답 DTO 설계
@@ -105,17 +107,17 @@ public class BoardService {
      * @param id (Board PK)
      * @return DetailDTO 처리 (OSIV 대응)
      */
-    public BoardResponse.DetailDTO 게시글상세조회(Integer id) {
-        log.info("게시글 상세 조회 서비스");
-        // N + 1 문제를 해결하기 위해 한번에 Board, User 가지고 옴
+    public BoardResponse.DetailDTO 게시글상세조회(Integer id, Integer sessionUserId) {
+
         Board boardEntity = boardRepository.findByIdJoinUser(id).orElseThrow(() -> {
             log.warn("게시글 조회 실패 - ID: {}", id);
             return new Exception404("해당하는 게시글을 찾을 수 없습니다");
         });
-        log.info("게시글 조회 완료 - 제목: {}, 작성자: {}",
-                boardEntity.getTitle(), boardEntity.getUser().getUsername());
 
-        return new BoardResponse.DetailDTO(boardEntity);
+        // 구매 여부 확인 추가 (로그인 사용자가 있을때만 의미 있음, 비로그인 시 null)
+        boolean purchased = purchaseService.구매여부확인(sessionUserId, id);
+
+        return new BoardResponse.DetailDTO(boardEntity, purchased);
     }
 
 
@@ -127,12 +129,8 @@ public class BoardService {
      */
     @Transactional
     public void 게시글작성(BoardRequest.SaveDTO saveDTO, User sessionUser) {
-        log.info("게시글 저장 서비스 시작 - 제목 : {}, 작성자 : {}",
-                saveDTO.getTitle(), sessionUser.getUsername());
         Board board = saveDTO.toEntity(sessionUser);
-        Board savedBoardEntity = boardRepository.save(board);
-        log.info("게시글 저장 완료 - ID : {}, 제목 : {}",
-                savedBoardEntity.getId(), savedBoardEntity.getTitle());
+        boardRepository.save(board);
     }
 
     /**
@@ -144,7 +142,7 @@ public class BoardService {
      */
     public BoardResponse.DetailDTO 게시글상세화면및인가처리(Integer id, User sessionUser) {
         log.info("게시글 상세 화면 및 인가 확인");
-        BoardResponse.DetailDTO detailDTO = 게시글상세조회(id);
+        BoardResponse.DetailDTO detailDTO = 게시글상세조회(id, sessionUser.getId());
         if (!detailDTO.getUserId().equals(sessionUser.getId())) {
             throw new Exception403("권한없음");
         }

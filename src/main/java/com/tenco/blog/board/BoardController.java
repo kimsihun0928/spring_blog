@@ -1,5 +1,7 @@
 package com.tenco.blog.board;
 
+import com.tenco.blog._core.util.Define;
+import com.tenco.blog.purchase.PurchaseService;
 import com.tenco.blog.reply.ReplyResponse;
 import com.tenco.blog.reply.ReplyService;
 import com.tenco.blog.user.User;
@@ -21,9 +23,26 @@ public class BoardController {
     private final BoardService boardService;
     // 댓글 목록 조회시 필요
     private final ReplyService replyService;
+    private final PurchaseService purchaseService;
+
+    // /board/{{board.id}}/purchase
+    @PostMapping("/board/{id}/purchase")
+    public String purchase(@PathVariable(name = "id") Integer boardId, HttpSession session) {
+        User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
+
+        // ✅ 1. 포인트가 차감된 최신 유저 객체를 서비스로부터 반환받습니다.
+        User updatedUser = purchaseService.구매하기(sessionUser.getId(), boardId);
+
+        // ✅ 2. 기존 세션을 최신 유저 정보로 덮어씌웁니다. (세션 동기화)
+        session.setAttribute(Define.SESSION_USER, updatedUser);
+
+        // 💡 추가 팁: 리다이렉트 주소에 슬래시(/)가 빠져있었다면 같이 수정해 주세요.
+        return "redirect:/board/" + boardId;
+    }
 
     /**
      * 게시글 작성 화면 요청
+     *
      * @return 페이지 반환
      * 주소설계 : http://localhost:8080/board/save-form
      */
@@ -34,12 +53,13 @@ public class BoardController {
 
     /**
      * 게시글 작성 기능 요청
+     *
      * @return 페이지 반환
      * 주소설계 : http://localhost:8080/board/save-form
      */
     @PostMapping("/board/save")
     public String saveProc(BoardRequest.SaveDTO saveDTO, HttpSession session) {
-        User sessionUser = (User) session.getAttribute("sessionUser");
+        User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
         saveDTO.validate();
         boardService.게시글작성(saveDTO, sessionUser);
         return "redirect:/";
@@ -81,15 +101,25 @@ public class BoardController {
     @GetMapping("/board/{id}")
     public String detailPage(@PathVariable(name = "id") Integer id, Model model, HttpSession session) {
 
-        BoardResponse.DetailDTO detailDTO = boardService.게시글상세조회(id);
-
         // 게시글 상세보기는 로그인 하지 않은 사용자도 들어올 수 있음
         User sessionUser = (User) session.getAttribute("sessionUser");
         Integer sessionUserId = sessionUser != null ? sessionUser.getId() : null;
+
+        // 추가 로직 - 유료 게시글이라면 구매 여부 포함해서 상세보기 조회
+        BoardResponse.DetailDTO detailDTO = boardService.게시글상세조회(id, sessionUserId);
+
+        // 유료 게시글 경우 - 본인이 작성한 글이라면 보여주어야함
+        // 소유자 여부
+        boolean isOwner = detailDTO.checkIsOwner(sessionUserId);
+
+        // 머스태치는 AND/OR 같은 논리 연산을 화면에서 못함. 즉, 자바 코드에서 미리 연산해서 내려주어야함
+        boolean canRead = !detailDTO.getPremium() || detailDTO.getPurchased() || isOwner;
+
         List<ReplyResponse.ListDTO> replyList = replyService.댓글목록조회(id, sessionUserId);
 
-        // view 에 데이터 전달
+        // view 에 데이터 전달- canRead -> true, false
         model.addAttribute("board", detailDTO);
+        model.addAttribute("canRead", canRead);
         model.addAttribute("checkIsOwner", detailDTO.checkIsOwner(sessionUserId));
         model.addAttribute("replyList", replyList);
 
@@ -120,7 +150,7 @@ public class BoardController {
     @PostMapping("/board/{id}/update")
     public String updateProc(@PathVariable(name = "id") Integer id,
                              BoardRequest.UpdateDTO updateDTO, HttpSession session) {
-        User sessionUser =  (User) session.getAttribute("sessionUser");
+        User sessionUser = (User) session.getAttribute("sessionUser");
         updateDTO.validate();
         boardService.게시글수정(id, updateDTO, sessionUser);
         return "redirect:/board/" + id;

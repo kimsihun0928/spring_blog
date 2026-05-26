@@ -21,11 +21,29 @@
     <!-- 게시글 내용 섹션 -->
     <div>
         <!-- 게시글 제목 -->
-        <h2><b>{{board.title}}</b></h2>
+        <h2><b>{{board.title}}</b>
+            {{#board.premium}} <span class="badge bg-warning"> 유료 </span>
+            {{/board.premium}}</h2>
         <hr/>
         <!-- 게시글 본문 -->
         <div class="m-4 p-2">
-            {{board.content}}
+            {{#canRead}}
+                {{board.content}}
+            {{/canRead}}
+            {{^canRead}}
+                <!--  로그인 시 - 이미 구매했다면 보여야함      -->
+                {{#sessionUser}}
+                        <form action="/board/{{board.id}}/purchase" method="post"
+                              onsubmit="return confirm('구매하시겠습니까?');">
+                            <button type="submit" class="btn btn-primary">구매하기(500P)</button>
+                        </form>
+                {{/sessionUser}}
+                {{^sessionUser}}
+                    <a href="login-form" class="btn btn-outline-primary">로그인 후 구매가능</a>
+                {{/sessionUser}}
+                <!--  비로그인 시 - 로그인 요청  -->
+            {{/canRead}}
+
         </div>
     </div>
 

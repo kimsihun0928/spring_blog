@@ -1,13 +1,14 @@
 package com.tenco.blog.board;
 
 import com.tenco.blog._core.errors.Exception403;
-import com.tenco.blog.user.User;
 import com.tenco.blog._core.util.MyDateUtil;
+import com.tenco.blog.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
@@ -30,6 +31,10 @@ public class Board {
     // private String username;
     private String title;
     private String content;
+
+    @ColumnDefault("false")
+    @Builder.Default // 이게 없으면 다른 파일에서 Builder 로 객체 생성 시 null 값으로 세팅됨
+    private Boolean premium = false;
 
     // 연관관계 설정 해줘야함
     // 다대일 연관관계 : 여러 개 게시글이 하나의 사용자에게 속한다.
@@ -57,6 +62,8 @@ public class Board {
         // this.username = updateDTO.getUsername();
         this.title = updateDTO.getTitle();
         this.content = updateDTO.getContent();
+        // 유료 여부도 함께 수정
+        this.premium = (updateDTO.getPremium() != null ? updateDTO.getPremium() : false);
 
         // 더티체킹 -  변경 감지 동작 과정
         // 1. 최초 조회 시 영속성 컨텍스트 1차 캐쉬에 데이터를 스냅샷으로 보관함

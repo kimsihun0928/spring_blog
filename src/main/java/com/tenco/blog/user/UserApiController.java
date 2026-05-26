@@ -1,5 +1,7 @@
 package com.tenco.blog.user;
 
+import com.tenco.blog._core.util.Define;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import java.util.Map;
 public class UserApiController {
 
     private final MailService mailService;
+    private final UserService userService;
 
     // 인증 번호 발송 API
     // 주소 설계 : http://localhost:8080/api/email/send    , POST
@@ -50,5 +53,28 @@ public class UserApiController {
             return ResponseEntity.badRequest().body(Map.of("message", "인증번호가 일치하지 않습니다."));
         }
 
+    }
+
+
+    // 포인트 충전 API 설계 (JSON형식으로 값이 들어옴)
+    @PostMapping("/api/point/charge")
+    public ResponseEntity<?> chargePoint(@RequestBody UserRequest.PointChargeDTO reqDTO, HttpSession session) {
+        // 1. 유효성 검사
+        reqDTO.validate();
+        // 2. 세션에서 사용자 정보 추출 (로그인 된 상태만 접근 가능)
+        User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
+        if (sessionUser == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+        }
+        // 3. 포인트 충전 처리 (비즈니스 로직)
+        User updatedUser = userService.포인트충전(sessionUser.getId(), reqDTO.getAmount());
+
+        // 4. 세션 동기화 처리 (user.point 값 갱신)
+        session.setAttribute(Define.SESSION_USER, updatedUser);
+
+
+        return ResponseEntity.ok().body(Map.of(
+                "message", "포인트가 충전되었습니다.",
+                "point", updatedUser.getPoint()));
     }
 }

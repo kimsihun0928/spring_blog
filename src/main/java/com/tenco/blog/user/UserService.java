@@ -256,4 +256,16 @@ public class UserService {
     public User 사용자이름조회(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }
+
+    @Transactional
+    public User 포인트충전(Integer id, Integer amount) {
+        // id 값으로 DB에 User 정보 조회부터 해야함
+        User userEntity = userRepository.findById(id).orElseThrow(
+                () -> new Exception404("사용자를 찾을 수 없습니다.")
+        );
+
+        userEntity.chargePoint(amount);
+        // Controller 에 User를 반환하기 위해서 save 호출 (신규 저장, 수정 같이 동작됨)
+        return userRepository.save(userEntity);
+    }
 }

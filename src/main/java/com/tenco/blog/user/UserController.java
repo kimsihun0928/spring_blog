@@ -27,6 +27,15 @@ public class UserController {
 
     private final UserService userService;
 
+    // 포인트 충전 화면 요청
+    @GetMapping("/user/point/charge")
+    public String chargePointPage(Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute(Define.SESSION_USER);
+        model.addAttribute("user", sessionUser);
+        return "user/charge-point";
+    }
+
+
     // 초기 파라미터 값을 가져오는 방법
     @Value("${oauth.kakao.client-id}")
     private String kakaoClientId;

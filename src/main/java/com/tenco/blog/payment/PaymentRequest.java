@@ -25,5 +25,17 @@ public class PaymentRequest {
         }
     }
 
+    @Data
+    public static class CompleteDTO {
+
+        private String paymentId;
+
+        public void validate() {
+            if(this.paymentId == null || paymentId.trim().isEmpty()) {
+                throw new Exception400("결제 건 식별자가 필요합니다.");
+            }
+        }
+    }
+
 
 }

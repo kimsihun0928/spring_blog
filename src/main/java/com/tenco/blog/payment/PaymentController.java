@@ -41,4 +41,29 @@ public class PaymentController {
     }
 
 
+
+    // /api/payment/complete
+    @PostMapping("/api/payment/complete")
+    public ResponseEntity<?> completePayment(@RequestBody PaymentRequest.CompleteDTO reqDTO,
+                                             HttpSession session) {
+
+        // 인증 검사
+        User sessionUser =(User) session.getAttribute(Define.SESSION_USER);
+        if (sessionUser == null) {
+            ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+        }
+        // 유효성 검사
+        reqDTO.validate();
+
+        PaymentResponse.CompleteDTO completeDTO = paymentService.결제검증후포인트충전(sessionUser.getId(), reqDTO.getPaymentId());
+
+        // 세션 동기화 처리
+        sessionUser.setPoint(completeDTO.getCurrentPoint());
+        session.setAttribute(Define.SESSION_USER, sessionUser);
+
+        return ResponseEntity.ok().body(completeDTO);
+
+    }
+
+
 }
